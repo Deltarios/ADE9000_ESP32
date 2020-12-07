@@ -1,0 +1,31 @@
+{
+    "name": "ADE9000_ESP32",
+    "version": "1.0.0",
+    "description": "A \"ADE9000\" program",
+    "keywords": "ADE9000, ESP32, ARDUINO",
+    "repository":
+    {
+      "type": "git",
+      "url": ""
+    },
+    "authors":
+    [
+      {
+        "name": "Ariel Rios",
+        "email": "",
+        "maintainer": true
+      },
+      {
+        "name": "David Cuy",
+        "url": "https://www.john-smith/contact",
+        "email": ""
+      }
+    ],
+    "license": "MIT",
+    "homepage": "https://www.helloworld.org/",
+    "dependencies": {
+      "ownername/print": "~1.3.0"
+    },
+    "frameworks": "arduino",
+    "platforms": "espressif32"
+  }

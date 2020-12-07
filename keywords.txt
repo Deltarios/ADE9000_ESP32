@@ -1,0 +1,25 @@
+#######################################
+# Syntax Coloring Map For ADE9000 in ESP32
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+ADE9000 KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+SPI_Init KEYWORD2
+SPI_Write_16 KEYWORD2
+SPI_Write_32 KEYWORD2
+SPI_Read_16 KEYWORD2
+SPI_Read_32 KEYWORD2
+
+#######################################
+# Library (KEYWORD3)
+#######################################
+
+ADE9000 KEYWORD3
