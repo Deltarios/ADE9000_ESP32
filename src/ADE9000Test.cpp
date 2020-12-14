@@ -2,6 +2,8 @@
 #define NOMINAL_INPUT_CURRENT 0.94
 #define INPUT_FREQUENCY 60
 
+#define ACCUMULATION_TIME 5
+
 #include <ADE9000RegMap.h>
 #include <ADE9000.h>
 #include "Arduino.h"

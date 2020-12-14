@@ -261,9 +261,199 @@ double ADE9000::convertCodeToAmperes(int32_t value)
     return result;
 }
 
-double ADE9000::convertCodeToWatts(int32_t value)
+double ADE9000::convertCodeToPower(int32_t value)
 {
     double result = 0;
     result = (double)(CAL_POWER_CC * value) / ONE_THOUSAND;
     return result;
+}
+
+void ADE9000::getPGA_gain(PGAGainRegs *Data)
+{
+    int16_t pgaGainRegister;
+    int16_t temp;
+    pgaGainRegister = SPI_Read_16(ADDR_PGA_GAIN); // Ensure PGA_GAIN is set correctly in SetupADE9000 function.
+    Serial.print("PGA Gain Register is: ");
+    Serial.println(pgaGainRegister, HEX);
+    temp = pgaGainRegister & (0x0003); // Extract gain of current channel
+    Serial.println(temp, HEX);
+    if (temp == 0) // 00-->Gain 1: 01-->Gain 2: 10/11-->Gain 4
+    {
+        Data->CurrentPGA_gain = 1;
+    }
+    else
+    {
+        if (temp == 1)
+        {
+            Data->CurrentPGA_gain = 2;
+        }
+        else
+        {
+            Data->CurrentPGA_gain = 4;
+        }
+    }
+    temp = (pgaGainRegister >> 8) & (0x0003); //extract gain of voltage channel
+    if (temp == 0)
+    {
+        Data->VoltagePGA_gain = 1;
+    }
+    else
+    {
+        if (temp == 1)
+        {
+            Data->VoltagePGA_gain = 2;
+        }
+        else
+        {
+            Data->VoltagePGA_gain = 4;
+        }
+    }
+}
+
+void ADE9000::iGain_calibrate(int32_t *igainReg, int32_t *iRmsRegAddress, int arraySize, uint8_t currentPGA_gain)
+{
+    float temp;
+    int32_t actualCodes;
+    int32_t expectedCodes;
+
+    temp = ADE9000_RMS_FULL_SCALE_CODES * CURRENT_TRANSFER_FUNCTION * currentPGA_gain * NOMINAL_INPUT_CURRENT * sqrt(2);
+    expectedCodes = (int32_t)temp; // Round off
+    Serial.print("Expected IRMS Code: ");
+    Serial.println(expectedCodes, HEX);
+    for (uint8_t i = 0; i < arraySize; i++)
+    {
+        actualCodes = SPI_Read_32(iRmsRegAddress[i]);
+        temp = (((float)expectedCodes / (float)actualCodes) - 1) * 134217728; // Calculate the gain.
+        igainReg[i] = (int32_t)temp;                                          // Round off
+        Serial.print("Channel ");
+        Serial.print(i + 1);
+        Serial.print(" actual IRMS Code: ");
+        Serial.println(actualCodes, HEX);
+        Serial.print("Current Gain Register: ");
+        Serial.println(igainReg[i], HEX);
+    }
+}
+
+void ADE9000::vGain_calibrate(int32_t *vgainReg, int32_t *vRmsRegAddress, int arraySize, uint8_t voltagePGA_gain)
+{
+    float temp;
+    int32_t actualCodes;
+    int32_t expectedCodes;
+
+    temp = ADE9000_RMS_FULL_SCALE_CODES * (VOLTAGE_TRANSFER_FUNCTION * voltagePGA_gain * NOMINAL_INPUT_VOLTAGE * sqrt(2));
+    expectedCodes = (int32_t)temp; //Round off
+    Serial.print("Expected VRMS Code: ");
+    Serial.println(expectedCodes, HEX);
+    for (uint8_t i = 0; i < arraySize; i++)
+    {
+        actualCodes = SPI_Read_32(vRmsRegAddress[i]);
+        temp = (((float)expectedCodes / (float)actualCodes) - 1) * 134217728; // Calculate the gain.
+        vgainReg[i] = (int32_t)temp;                                          // Round off
+        Serial.print("Channel ");
+        Serial.print(i + 1);
+        Serial.print(" actual VRMS Code: ");
+        Serial.println(actualCodes, HEX);
+        Serial.print("Voltage Gain Register: ");
+        Serial.println(vgainReg[i], HEX);
+    }
+}
+
+void ADE9000::phase_calibrate(int32_t *phcalReg, int32_t *accActiveEgyReg, int32_t *accReactiveEgyReg, int arraySize)
+{
+    Serial.println("Computing phase calibration registers...");
+    delay((ACCUMULATION_TIME + 1) * 1000); // Delay to ensure the energy registers are accumulated for defined interval
+    float errorAngle;
+    float errorAngleDeg;
+    float omega;
+    double temp;
+    int32_t actualActiveEnergyCode;
+    int32_t actualReactiveEnergyCode;
+    int i;
+    omega = (float)2 * (float)3.14159 * (float)INPUT_FREQUENCY / (float)ADE90xx_FDSP;
+
+    for (i = 0; i < arraySize; i++)
+    {
+        actualActiveEnergyCode = accActiveEgyReg[i];
+        actualReactiveEnergyCode = accReactiveEgyReg[i];
+        errorAngle = (double)-1 * atan(((double)actualActiveEnergyCode * (double)sin(CAL_ANGLE_RADIANS(CALIBRATION_ANGLE_DEGREES)) - (double)actualReactiveEnergyCode * (double)cos(CAL_ANGLE_RADIANS(CALIBRATION_ANGLE_DEGREES))) / ((double)actualActiveEnergyCode * (double)cos(CAL_ANGLE_RADIANS(CALIBRATION_ANGLE_DEGREES)) + (double)actualReactiveEnergyCode * (double)sin(CAL_ANGLE_RADIANS(CALIBRATION_ANGLE_DEGREES))));
+        temp = (((double)sin((double)errorAngle - (double)omega) + (double)sin((double)omega)) / ((double)sin(2 * (double)omega - (double)errorAngle))) * 134217728;
+        phcalReg[i] = (int32_t)temp;
+        errorAngleDeg = (float)errorAngle * 180 / 3.14159;
+        Serial.print("Channel ");
+        Serial.print(i + 1);
+        Serial.print(" actual Active Energy Register: ");
+        Serial.println(actualActiveEnergyCode, HEX);
+        Serial.print("Channel ");
+        Serial.print(i + 1);
+        Serial.print(" actual Reactive Energy Register: ");
+        Serial.println(actualReactiveEnergyCode, HEX);
+        Serial.print("Phase Correction (degrees): ");
+        Serial.println(errorAngleDeg, 5);
+        Serial.print("Phase Register: ");
+        Serial.println(phcalReg[i], HEX);
+    }
+}
+
+void ADE9000::pGain_calibrate(int32_t *pgainReg, int32_t *accActiveEgyReg, int arraySize, uint8_t currentPGA_gain, uint8_t voltagePGA_gain, float pGaincalPF)
+{
+    Serial.println("Computing power gain calibration registers...");
+    delay((ACCUMULATION_TIME + 1) * 1000); // Delay to ensure the energy registers are accumulated for defined interval
+    int32_t expectedActiveEnergyCode;
+    int32_t actualActiveEnergyCode;
+    int i;
+    float temp;
+    temp = ((float)ADE90xx_FDSP * (float)NOMINAL_INPUT_VOLTAGE * (float)NOMINAL_INPUT_CURRENT * (float)CALIBRATION_ACC_TIME * (float)CURRENT_TRANSFER_FUNCTION * (float)currentPGA_gain * (float)VOLTAGE_TRANSFER_FUNCTION * (float)voltagePGA_gain * (float)ADE9000_WATT_FULL_SCALE_CODES * 2 * (float)(pGaincalPF)) / (float)(8192);
+    expectedActiveEnergyCode = (int32_t)temp;
+    Serial.print("Expected Active Energy Code: ");
+    Serial.println(expectedActiveEnergyCode, HEX);
+
+    for (i = 0; i < arraySize; i++)
+    {
+        actualActiveEnergyCode = accActiveEgyReg[i];
+
+        temp = (((float)expectedActiveEnergyCode / (float)actualActiveEnergyCode) - 1) * 134217728; // Calculate the gain.
+        pgainReg[i] = (int32_t)temp;                                                                // Round off
+        Serial.print("Channel ");
+        Serial.print(i + 1);
+        Serial.print("Actual Active Energy Code: ");
+        Serial.println(actualActiveEnergyCode, HEX);
+        Serial.print("Power Gain Register: ");
+        Serial.println(pgainReg[i], HEX);
+    }
+}
+
+void ADE9000::updateEnergyRegisterFromInterrupt(uint32_t (&accumulatedActiveEnergy_registers)[EGY_REG_SIZE], uint32_t (&accumulatedReactiveEnergy_registers)[EGY_REG_SIZE])
+{
+    static int8_t count = 0;
+    static int32_t xWATTHRHI_registers_address[PHCAL_CAL_REG_SIZE] = {ADDR_AWATTHR_HI, ADDR_BWATTHR_HI, ADDR_CWATTHR_HI};
+    static int32_t xVARHRHI_registers_address[PHCAL_CAL_REG_SIZE] = {ADDR_AVARHR_HI, ADDR_BVARHR_HI, ADDR_CVARHR_HI};
+    static int32_t intermediateActiveEgy_Reg[EGY_REG_SIZE] = {0};
+    static int32_t intermediateReactiveEgy_Reg[EGY_REG_SIZE] = {0};
+    uint32_t temp;
+    temp = SPI_Read_32(ADDR_STATUS0);
+    temp &= EGY_INTERRUPT_MASK0;
+    if (temp == EGY_INTERRUPT_MASK0)
+    {
+        SPI_Write_32(ADDR_STATUS0, 0xFFFFFFFF);
+        for (int8_t i = 0; i < EGY_REG_SIZE; i++)
+        {
+            intermediateActiveEgy_Reg[i] += SPI_Read_32(xWATTHRHI_registers_address[i]);  // Accumulate the registers
+            intermediateReactiveEgy_Reg[i] += SPI_Read_32(xVARHRHI_registers_address[i]); // Accumulate the registers
+        }
+
+        if (count == (ACCUMULATION_TIME - 1)) //if the accumulation time is reached, update the final values to registers
+        {
+            for (uint8_t i = 0; i < EGY_REG_SIZE; i++)
+            {
+                accumulatedActiveEnergy_registers[i] = intermediateActiveEgy_Reg[i];
+                accumulatedReactiveEnergy_registers[i] = intermediateReactiveEgy_Reg[i];
+                intermediateActiveEgy_Reg[i] = 0;   // Reset the intermediate registers
+                intermediateReactiveEgy_Reg[i] = 0; // Reset the intermediate registers
+            }
+            count = 0; //Reset counter
+            return;    //exit function
+        }
+        count++;
+        return;
+    }
 }

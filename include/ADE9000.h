@@ -85,10 +85,20 @@
 #warning "ATTEUNATION_FACTOR not defined for <ADE9000.h>"
 /** \ingroup ade9000
     \def TURNS_RATIO_TRANSFORMER
-    \brief The defaul atteunation factor on board used funtion transform in Ohm ((R1 + R2)/ R2)
+    \brief The defaul atteunation factor on board used funtion transform in Ohm/Ohm ((R1 + R2)/ R2)
  */
 #define ATTEUNATION_FACTOR 801
 #endif
+
+#ifndef ACCUMULATION_TIME
+/* prevent compiler error by supplying a default */
+#warning "ACCUMULATION_TIME not defined for <ADE9000.h>"
+/** \ingroup ade9000
+    \def ACCUMULATION_TIME
+    \brief Accumulation time in seconds when EGY_TIME=7999, accumulation mode= sample based
+ */
+#define ACCUMULATION_TIME 1
+#endif        
 
 // #ifndef F_CPU
 // /* prevent compiler error by supplying a default */
@@ -155,6 +165,18 @@
 #define ADE9000_RESAMPLED_FULL_SCALE_CODES 18196
 #define ADE9000_PCF_FULL_SCALE_CODES 74532013
 
+enum CAL_STATE
+{
+  CAL_START,
+  CAL_VI_CALIBRATE,
+  CAL_PHASE_CALIBRATE,
+  CAL_PGAIN_CALIBRATE,
+  CAL_STORE,
+  CAL_STOP,
+  CAL_RESTART,
+  CAL_COMPLETE
+};
+
 /*Transfer function*/
 /****************************************************************************************************************
 									Current Transfer Function
@@ -180,6 +202,13 @@ Voltage transfer function = 1/801= 0.001248 ~=0.00125
 #define CALIBRATION_EGY_CFG 0xF011 //Latch after EGYRDY. Sample based accumulation. Read with reset disabled. Accumulation enabled
 #define EGYACCTIME 0x1F3F          //Accumulate for a total of 8000 (EGY_TIME+1) samples.
 #define CALIBRATION_ACC_TIME 1     //if EGYACCTIME= 0x1F3F, Accumulation time is 1sec. Change this if EGYACCTIME is changed.
+#define EGY_INTERRUPT_MASK0 0x00000001      //Enable EGYRDY interrupt
+
+#define IGAIN_CAL_REG_SIZE 4
+#define VGAIN_CAL_REG_SIZE 3  
+#define PHCAL_CAL_REG_SIZE 3
+#define PGAIN_CAL_REG_SIZE 3
+#define EGY_REG_SIZE 3
 
 #define CAL_ANGLE_RADIANS(x) (x * 3.14159 / 180)
 #define ONE_MILLION 1000000UL
@@ -254,6 +283,12 @@ struct CurrentRMSRegs
   int32_t CurrentRMSReg_B;
   int32_t CurrentRMSReg_C;
   int32_t CurrentRMSReg_N;
+};
+
+struct PGAGainRegs
+{
+  int8_t VoltagePGA_gain;
+  int8_t CurrentPGA_gain;
 };
 
 // struct FundActivePowerRegs
@@ -477,14 +512,14 @@ public:
   /*----- ADE9000 Calculated Physical parameters -----*/
 
   /* 
-  Convert the codes of registers volts rms AVRMS, BVRMS and CVRMS and converted to physical parameters
+  Convert the codes of registers AVRMS, BVRMS and CVRMS and converted to physical parameters
   Input: code value
   Output: Volts RMS physical parameter (Vrms)
   */
   double convertCodeToVolts(int32_t value);
 
   /* 
-  Convert the codes of registers amperes rms AIRMS, BIRMS and CIRMS and converted to physical parameters
+  Convert the codes of registers AIRMS, BIRMS and CIRMS and converted to physical parameters
   Input: code value
   Output: Volts RMS physical parameter (Arms)
   */
@@ -495,7 +530,46 @@ public:
   Input: code value
   Output: Power physical parameter (Watt, VA, VAR)
   */
-  double convertCodeToWatts(int32_t value);
+  double convertCodeToPower(int32_t value);
+
+  /*----- ADE9000 Calibration functions -----*/
+
+  /* 
+  Get gain calibration of PGA of register PGA_GAIN 
+  Input:-
+  Output:- PGA_GAIN (1, 2 or 4)
+  */
+  void getPGA_gain(PGAGainRegs *);
+
+  /* 
+  Current gain calibration function
+  Input: Stored in respective structure
+  Output:-
+  */
+  void iGain_calibrate(int32_t *, int32_t *, int, uint8_t);
+
+  /* 
+  Voltage gain calibration function
+  Input: Stored in respective structure
+  Output:-
+  */
+  void vGain_calibrate(int32_t *, int32_t *, int, uint8_t);
+
+  /* 
+  Phase gain calibration function
+  Input: Stored in respective structure
+  Output:-
+  */
+  void phase_calibrate(int32_t *, int32_t *, int32_t *, int);
+
+  /* 
+  Power gain calibration function
+  Input: Stored in respective structure
+  Output:-
+  */
+  void pGain_calibrate(int32_t *, int32_t *, int, uint8_t, uint8_t, float);
+
+  void updateEnergyRegisterFromInterrupt(uint32_t (&)[EGY_REG_SIZE], uint32_t (&)[EGY_REG_SIZE]);
 
 private:
   uint8_t _chipSelect_Pin;
