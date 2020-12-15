@@ -15,7 +15,6 @@
    ================================================================================ 
 */
 
-
 #define ADDR_AIGAIN                          0x00000000            /*  Phase A current gain adjust. */
 #define ADDR_AIGAIN0                         0x00000001            /*  If multipoint gain and phase compensation is enabled, with MTEN = 1 in the CONFIG0 register, an additional gain factor, AIGAIN0 through AIGAIN5, is applied based on the AIRMS current rms amplitude and the MTTHR_Lx and MTTHR_Hx register values */
 #define ADDR_AIGAIN1                         0x00000002            /*  Phase A Multipoint gain correction factor--see AIGAIN0. */

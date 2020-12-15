@@ -47,16 +47,16 @@ void loop()
 void readRegisterData()
 {
   /*Read and Print RMS & WATT Register using ADE9000 Read Library*/
-  ade9000.readCurrentRMSRegs(&currentRMSRegs);
+  ade9000.readCurrentRMSRegs(&currentRMSRegs); // Template to current rms registers from ADE9000 and store data in ESP32 MCU
   ade9000.readVoltageRMSRegs(&vltgRMSRegs);
   ade9000.readActivePowerRegs(&powerRegs); // Template to read Power registers from ADE9000 and store data in ESP32 MCU
   Serial.print("AIRMS: ");
-  Serial.print(ade9000.convertCodeToAmperes(currentRMSRegs.CurrentRMSReg_A)); // AIRMS
+  Serial.print(ade9000.convertCodeToAmperes(currentRMSRegs.CurrentRMSReg_A)); // Print AIRMS register to Irms (A)
   Serial.println(" Arms");
   Serial.print("AVRMS: ");
-  Serial.print(ade9000.convertCodeToVolts(vltgRMSRegs.VoltageRMSReg_A)); //Print AVRMS register
+  Serial.print(ade9000.convertCodeToVolts(vltgRMSRegs.VoltageRMSReg_A)); //Print AVRMS register to Vrms (V)
   Serial.println(" Vrms");
   Serial.print("AWATT: ");
-  Serial.print(ade9000.convertCodeToPower(powerRegs.ActivePowerReg_A)); //Print AWATT register
+  Serial.print(ade9000.convertCodeToPower(powerRegs.ActivePowerReg_A)); //Print AWATT register to Watts (W)
   Serial.println(" WATTS");
 }
