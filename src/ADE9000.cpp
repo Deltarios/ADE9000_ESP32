@@ -33,6 +33,15 @@ void ADE9000::setupADE9000(void)
     SPI_Write_16(ADDR_RUN, ADE9000_RUN_ON);    //DSP ON
 }
 
+void ADE9000::resetADE9000(uint8_t ADE9000_RESET_PIN)
+{
+  digitalWrite(ADE9000_RESET_PIN, LOW);
+  delay(50);
+  digitalWrite(ADE9000_RESET_PIN, HIGH);
+  delay(1000);
+  Serial.println("Reset Done");
+}
+
 void ADE9000::SPI_Init(uint32_t SPI_speed, uint8_t chipSelect_Pin)
 {
     SPI.begin();                                                       //Initiate SPI port
@@ -97,35 +106,35 @@ uint32_t ADE9000::SPI_Read_32(uint16_t Address)
     return returnData;
 }
 
-void ADE9000::ReadActivePowerRegs(ActivePowerRegs *Data)
+void ADE9000::readActivePowerRegs(ActivePowerRegs *Data)
 {
     Data->ActivePowerReg_A = int32_t(SPI_Read_32(ADDR_AWATT));
     Data->ActivePowerReg_B = int32_t(SPI_Read_32(ADDR_BWATT));
     Data->ActivePowerReg_C = int32_t(SPI_Read_32(ADDR_CWATT));
 }
 
-void ADE9000::ReadReactivePowerRegs(ReactivePowerRegs *Data)
+void ADE9000::readReactivePowerRegs(ReactivePowerRegs *Data)
 {
     Data->ReactivePowerReg_A = int32_t(SPI_Read_32(ADDR_AVAR));
     Data->ReactivePowerReg_B = int32_t(SPI_Read_32(ADDR_BVAR));
     Data->ReactivePowerReg_C = int32_t(SPI_Read_32(ADDR_CVAR));
 }
 
-void ADE9000::ReadApparentPowerRegs(ApparentPowerRegs *Data)
+void ADE9000::readApparentPowerRegs(ApparentPowerRegs *Data)
 {
     Data->ApparentPowerReg_A = int32_t(SPI_Read_32(ADDR_AVA));
     Data->ApparentPowerReg_B = int32_t(SPI_Read_32(ADDR_BVA));
     Data->ApparentPowerReg_C = int32_t(SPI_Read_32(ADDR_CVA));
 }
 
-void ADE9000::ReadVoltageRMSRegs(VoltageRMSRegs *Data)
+void ADE9000::readVoltageRMSRegs(VoltageRMSRegs *Data)
 {
     Data->VoltageRMSReg_A = int32_t(SPI_Read_32(ADDR_AVRMS));
     Data->VoltageRMSReg_B = int32_t(SPI_Read_32(ADDR_BVRMS));
     Data->VoltageRMSReg_C = int32_t(SPI_Read_32(ADDR_CVRMS));
 }
 
-void ADE9000::ReadCurrentRMSRegs(CurrentRMSRegs *Data)
+void ADE9000::readCurrentRMSRegs(CurrentRMSRegs *Data)
 {
     Data->CurrentRMSReg_A = int32_t(SPI_Read_32(ADDR_AIRMS));
     Data->CurrentRMSReg_B = int32_t(SPI_Read_32(ADDR_BIRMS));
@@ -133,7 +142,7 @@ void ADE9000::ReadCurrentRMSRegs(CurrentRMSRegs *Data)
     Data->CurrentRMSReg_N = int32_t(SPI_Read_32(ADDR_NIRMS));
 }
 
-void ADE9000::ReadPowerFactorRegsnValues(PowerFactorRegs *Data)
+void ADE9000::readPowerFactorRegsnValues(PowerFactorRegs *Data)
 {
     uint32_t tempReg;
     float tempValue;
@@ -152,7 +161,7 @@ void ADE9000::ReadPowerFactorRegsnValues(PowerFactorRegs *Data)
     Data->PowerFactorValue_C = tempValue;
 }
 
-void ADE9000::ReadPeriodRegsnValues(PeriodRegs *Data)
+void ADE9000::readPeriodRegsnValues(PeriodRegs *Data)
 {
     uint32_t tempReg;
     float tempValue;
@@ -170,7 +179,7 @@ void ADE9000::ReadPeriodRegsnValues(PeriodRegs *Data)
     Data->FrequencyValue_C = tempValue;
 }
 
-void ADE9000::ReadAngleRegsnValues(AngleRegs *Data)
+void ADE9000::readAngleRegsnValues(AngleRegs *Data)
 {
 
     uint32_t tempReg;
@@ -226,7 +235,7 @@ void ADE9000::ReadAngleRegsnValues(AngleRegs *Data)
     Data->AngleValue_IA_IC = tempValue;
 }
 
-void ADE9000::ReadTempRegnValue(TemperatureRegnValue *Data)
+void ADE9000::readTempRegnValue(TemperatureRegnValue *Data)
 {
     uint32_t trim;
     uint16_t gain;
@@ -273,10 +282,11 @@ void ADE9000::getPGA_gain(PGAGainRegs *Data)
     int16_t pgaGainRegister;
     int16_t temp;
     pgaGainRegister = SPI_Read_16(ADDR_PGA_GAIN); // Ensure PGA_GAIN is set correctly in SetupADE9000 function.
+    temp = pgaGainRegister & (0x0003);            // Extract gain of current channel
+#ifdef DEBUG_MODE
     Serial.print("PGA Gain Register is: ");
-    Serial.println(pgaGainRegister, HEX);
-    temp = pgaGainRegister & (0x0003); // Extract gain of current channel
     Serial.println(temp, HEX);
+#endif
     if (temp == 0) // 00-->Gain 1: 01-->Gain 2: 10/11-->Gain 4
     {
         Data->CurrentPGA_gain = 1;
@@ -318,19 +328,23 @@ void ADE9000::iGain_calibrate(int32_t *igainReg, int32_t *iRmsRegAddress, int ar
 
     temp = ADE9000_RMS_FULL_SCALE_CODES * CURRENT_TRANSFER_FUNCTION * currentPGA_gain * NOMINAL_INPUT_CURRENT * sqrt(2);
     expectedCodes = (int32_t)temp; // Round off
+#ifdef DEBUG_MODE
     Serial.print("Expected IRMS Code: ");
     Serial.println(expectedCodes, HEX);
     for (uint8_t i = 0; i < arraySize; i++)
+#endif
     {
         actualCodes = SPI_Read_32(iRmsRegAddress[i]);
         temp = (((float)expectedCodes / (float)actualCodes) - 1) * 134217728; // Calculate the gain.
         igainReg[i] = (int32_t)temp;                                          // Round off
+#ifdef DEBUG_MODE
         Serial.print("Channel ");
         Serial.print(i + 1);
         Serial.print(" actual IRMS Code: ");
         Serial.println(actualCodes, HEX);
         Serial.print("Current Gain Register: ");
         Serial.println(igainReg[i], HEX);
+#endif
     }
 }
 
@@ -341,20 +355,24 @@ void ADE9000::vGain_calibrate(int32_t *vgainReg, int32_t *vRmsRegAddress, int ar
     int32_t expectedCodes;
 
     temp = ADE9000_RMS_FULL_SCALE_CODES * (VOLTAGE_TRANSFER_FUNCTION * voltagePGA_gain * NOMINAL_INPUT_VOLTAGE * sqrt(2));
-    expectedCodes = (int32_t)temp; //Round off
+    expectedCodes = (int32_t)temp; // Round off
+#ifdef DEBUG_MODE
     Serial.print("Expected VRMS Code: ");
     Serial.println(expectedCodes, HEX);
+#endif
     for (uint8_t i = 0; i < arraySize; i++)
     {
         actualCodes = SPI_Read_32(vRmsRegAddress[i]);
         temp = (((float)expectedCodes / (float)actualCodes) - 1) * 134217728; // Calculate the gain.
         vgainReg[i] = (int32_t)temp;                                          // Round off
+#ifdef DEBUG_MODE
         Serial.print("Channel ");
         Serial.print(i + 1);
         Serial.print(" actual VRMS Code: ");
         Serial.println(actualCodes, HEX);
         Serial.print("Voltage Gain Register: ");
         Serial.println(vgainReg[i], HEX);
+#endif
     }
 }
 
@@ -379,6 +397,7 @@ void ADE9000::phase_calibrate(int32_t *phcalReg, int32_t *accActiveEgyReg, int32
         temp = (((double)sin((double)errorAngle - (double)omega) + (double)sin((double)omega)) / ((double)sin(2 * (double)omega - (double)errorAngle))) * 134217728;
         phcalReg[i] = (int32_t)temp;
         errorAngleDeg = (float)errorAngle * 180 / 3.14159;
+#ifdef DEBUG_MODE
         Serial.print("Channel ");
         Serial.print(i + 1);
         Serial.print(" actual Active Energy Register: ");
@@ -391,6 +410,7 @@ void ADE9000::phase_calibrate(int32_t *phcalReg, int32_t *accActiveEgyReg, int32
         Serial.println(errorAngleDeg, 5);
         Serial.print("Phase Register: ");
         Serial.println(phcalReg[i], HEX);
+#endif
     }
 }
 
@@ -404,8 +424,10 @@ void ADE9000::pGain_calibrate(int32_t *pgainReg, int32_t *accActiveEgyReg, int a
     float temp;
     temp = ((float)ADE90xx_FDSP * (float)NOMINAL_INPUT_VOLTAGE * (float)NOMINAL_INPUT_CURRENT * (float)CALIBRATION_ACC_TIME * (float)CURRENT_TRANSFER_FUNCTION * (float)currentPGA_gain * (float)VOLTAGE_TRANSFER_FUNCTION * (float)voltagePGA_gain * (float)ADE9000_WATT_FULL_SCALE_CODES * 2 * (float)(pGaincalPF)) / (float)(8192);
     expectedActiveEnergyCode = (int32_t)temp;
+#ifdef DEBUG_MODE
     Serial.print("Expected Active Energy Code: ");
     Serial.println(expectedActiveEnergyCode, HEX);
+#endif
 
     for (i = 0; i < arraySize; i++)
     {
@@ -413,20 +435,23 @@ void ADE9000::pGain_calibrate(int32_t *pgainReg, int32_t *accActiveEgyReg, int a
 
         temp = (((float)expectedActiveEnergyCode / (float)actualActiveEnergyCode) - 1) * 134217728; // Calculate the gain.
         pgainReg[i] = (int32_t)temp;                                                                // Round off
+#ifdef DEBUG_MODE
         Serial.print("Channel ");
         Serial.print(i + 1);
         Serial.print("Actual Active Energy Code: ");
         Serial.println(actualActiveEnergyCode, HEX);
         Serial.print("Power Gain Register: ");
         Serial.println(pgainReg[i], HEX);
+#endif
     }
 }
 
 void ADE9000::updateEnergyRegisterFromInterrupt(uint32_t (&accumulatedActiveEnergy_registers)[EGY_REG_SIZE], uint32_t (&accumulatedReactiveEnergy_registers)[EGY_REG_SIZE])
 {
+    const int32_t xWATTHRHI_registers_address[PHCAL_CAL_REG_SIZE] = {ADDR_AWATTHR_HI, ADDR_BWATTHR_HI, ADDR_CWATTHR_HI};
+    const int32_t xVARHRHI_registers_address[PHCAL_CAL_REG_SIZE] = {ADDR_AVARHR_HI, ADDR_BVARHR_HI, ADDR_CVARHR_HI};
+
     static int8_t count = 0;
-    static int32_t xWATTHRHI_registers_address[PHCAL_CAL_REG_SIZE] = {ADDR_AWATTHR_HI, ADDR_BWATTHR_HI, ADDR_CWATTHR_HI};
-    static int32_t xVARHRHI_registers_address[PHCAL_CAL_REG_SIZE] = {ADDR_AVARHR_HI, ADDR_BVARHR_HI, ADDR_CVARHR_HI};
     static int32_t intermediateActiveEgy_Reg[EGY_REG_SIZE] = {0};
     static int32_t intermediateReactiveEgy_Reg[EGY_REG_SIZE] = {0};
     uint32_t temp;

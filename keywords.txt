@@ -8,15 +8,55 @@
 
 ADE9000 KEYWORD1
 
+ResampledWfbData KEYWORD1
+
+ActivePowerRegs KEYWORD1
+ReactivePowerRegs KEYWORD1
+ApparentPowerRegs KEYWORD1
+
+VoltageRMSRegs KEYWORD1
+CurrentRMSRegs KEYWORD1
+
+PGAGainRegs KEYWORD1
+
+PowerFactorRegs KEYWORD1
+PeriodRegs KEYWORD1
+AngleRegs KEYWORD1
+
 #######################################
 # Methods and Functions (KEYWORD2)
 #######################################
+
+setupADE9000 KEYWORD2
+resetADE9000 KEYWORD2
 
 SPI_Init KEYWORD2
 SPI_Write_16 KEYWORD2
 SPI_Write_32 KEYWORD2
 SPI_Read_16 KEYWORD2
 SPI_Read_32 KEYWORD2
+
+readActivePowerRegs KEYWORD2
+readReactivePowerRegs KEYWORD2
+readApparentPowerRegs KEYWORD2
+readVoltageRMSRegs KEYWORD2
+readCurrentRMSRegs KEYWORD2
+readPowerFactorRegsnValues KEYWORD2
+readPeriodRegsnValues KEYWORD2
+readAngleRegsnValues KEYWORD2
+readTempRegnValue KEYWORD2
+
+convertCodeToVolts KEYWORD2
+convertCodeToAmperes KEYWORD2
+convertCodeToPower KEYWORD2
+
+getPGA_gain KEYWORD2
+iGain_calibrate KEYWORD2
+vGain_calibrate KEYWORD2
+phase_calibrate KEYWORD2
+pGain_calibrate KEYWORD2
+
+updateEnergyRegisterFromInterrupt KEYWORD2
 
 #######################################
 # Library (KEYWORD3)

@@ -20,6 +20,11 @@
 									User Inputs
 ******************************************************************************************************************/
 
+#ifndef DEBUG_MODE_OFF
+#define DEBUG_MODE
+#define PRINT_DEBUG(x) (Serial.print(x))
+#endif
+
 #ifndef NOMINAL_INPUT_VOLTAGE
 /* prevent compiler error by supplying a default */
 #warning "NOMINAL_INPUT_VOLTAGE not defined for <ADE9000.h>"
@@ -98,7 +103,7 @@
     \brief Accumulation time in seconds when EGY_TIME=7999, accumulation mode= sample based
  */
 #define ACCUMULATION_TIME 1
-#endif        
+#endif
 
 // #ifndef F_CPU
 // /* prevent compiler error by supplying a default */
@@ -165,6 +170,7 @@
 #define ADE9000_RESAMPLED_FULL_SCALE_CODES 18196
 #define ADE9000_PCF_FULL_SCALE_CODES 74532013
 
+/* State for calibration*/
 enum CAL_STATE
 {
   CAL_START,
@@ -198,14 +204,14 @@ Voltage transfer function = 1/801= 0.001248 ~=0.00125
 /****************************************************************************************************************
 									Constants: Do not change 
 *****************************************************************************************************************/
-#define F_DSP 8000                 //Signal update Rate
-#define CALIBRATION_EGY_CFG 0xF011 //Latch after EGYRDY. Sample based accumulation. Read with reset disabled. Accumulation enabled
-#define EGYACCTIME 0x1F3F          //Accumulate for a total of 8000 (EGY_TIME+1) samples.
-#define CALIBRATION_ACC_TIME 1     //if EGYACCTIME= 0x1F3F, Accumulation time is 1sec. Change this if EGYACCTIME is changed.
-#define EGY_INTERRUPT_MASK0 0x00000001      //Enable EGYRDY interrupt
+#define F_DSP 8000                     //Signal update Rate
+#define CALIBRATION_EGY_CFG 0xF011     //Latch after EGYRDY. Sample based accumulation. Read with reset disabled. Accumulation enabled
+#define EGYACCTIME 0x1F3F              //Accumulate for a total of 8000 (EGY_TIME+1) samples.
+#define CALIBRATION_ACC_TIME 1         //if EGYACCTIME= 0x1F3F, Accumulation time is 1sec. Change this if EGYACCTIME is changed.
+#define EGY_INTERRUPT_MASK0 0x00000001 //Enable EGYRDY interrupt
 
 #define IGAIN_CAL_REG_SIZE 4
-#define VGAIN_CAL_REG_SIZE 3  
+#define VGAIN_CAL_REG_SIZE 3
 #define PHCAL_CAL_REG_SIZE 3
 #define PGAIN_CAL_REG_SIZE 3
 #define EGY_REG_SIZE 3
@@ -238,6 +244,7 @@ e.g Channel A Vrms = (AVRMS(register)*CAL_VRMS_CC/10^6) Channel A Active Power =
  Structures and Global Variables
 ****************************************************************************************************************/
 
+/* Arrays of resampled waveform structure for saved data codes */
 struct ResampledWfbData
 {
   int16_t VA_Resampled[WFB_ELEMENT_ARRAY_SIZE];
@@ -249,6 +256,7 @@ struct ResampledWfbData
   int16_t IN_Resampled[WFB_ELEMENT_ARRAY_SIZE];
 };
 
+/* Active Power structure for saved data codes */
 struct ActivePowerRegs
 {
   int32_t ActivePowerReg_A;
@@ -256,6 +264,7 @@ struct ActivePowerRegs
   int32_t ActivePowerReg_C;
 };
 
+/* Reactive Power structure for saved data codes */
 struct ReactivePowerRegs
 {
   int32_t ReactivePowerReg_A;
@@ -263,6 +272,7 @@ struct ReactivePowerRegs
   int32_t ReactivePowerReg_C;
 };
 
+/* Apparent Power structure for saved data codes */
 struct ApparentPowerRegs
 {
   int32_t ApparentPowerReg_A;
@@ -270,6 +280,7 @@ struct ApparentPowerRegs
   int32_t ApparentPowerReg_C;
 };
 
+/* Voltage structure for saved data codes */
 struct VoltageRMSRegs
 {
   int32_t VoltageRMSReg_A;
@@ -277,6 +288,7 @@ struct VoltageRMSRegs
   int32_t VoltageRMSReg_C;
 };
 
+/* Current structure for saved data codes */
 struct CurrentRMSRegs
 {
   int32_t CurrentRMSReg_A;
@@ -285,6 +297,7 @@ struct CurrentRMSRegs
   int32_t CurrentRMSReg_N;
 };
 
+/* PGA Gain structure for saved voltage and current gain */
 struct PGAGainRegs
 {
   int8_t VoltagePGA_gain;
@@ -377,6 +390,7 @@ struct PGAGainRegs
 //   float CurrentTHDValue_C;
 // };
 
+/* Power factor structure for saved data codes */
 struct PowerFactorRegs
 {
   int32_t PowerFactorReg_A;
@@ -387,6 +401,7 @@ struct PowerFactorRegs
   float PowerFactorValue_C;
 };
 
+/* Period structure for saved data codes */
 struct PeriodRegs
 {
   int32_t PeriodReg_A;
@@ -397,6 +412,7 @@ struct PeriodRegs
   float FrequencyValue_C;
 };
 
+/* Angle structure for saved data codes and values */
 struct AngleRegs
 {
   int16_t AngleReg_VA_VB;
@@ -419,6 +435,7 @@ struct AngleRegs
   float AngleValue_IA_IC;
 };
 
+/* Temperature structure for data codes */
 struct TemperatureRegnValue
 {
   int16_t Temperature_Reg;
@@ -428,14 +445,24 @@ struct TemperatureRegnValue
 class ADE9000
 {
 public:
+  /*
+  Constructor for ADE9000 object.
+  */
   ADE9000();
 
   /*
   Initializes the ADE9000. The initial settings for registers are defined in ADE9000API.h header file
   Input: Register settings in header files
-  Output: 
+  Output:-
   */
   void setupADE9000(void);
+
+  /*
+  Reset the ADE9000. The reset ADE9000 for init mode.
+  Input: Select pin for reset the ADE9000 connect to ESP32.
+  Output:-
+  */
+  void resetADE9000(uint8_t);
 
   /*----- SPI Functions -----*/
 
@@ -482,17 +509,36 @@ public:
   Input: Structure name
   Output: Active power codes stored in respective structure
   */
-  void ReadActivePowerRegs(ActivePowerRegs *Data);
+  void readActivePowerRegs(ActivePowerRegs *Data);
 
   /* 
   Reads the Reactive power registers AVAR,BVAR and CVAR
   Input: Structure name
   Output: Reactive power codes stored in respective structure
   */
-  void ReadReactivePowerRegs(ReactivePowerRegs *Data);
-  void ReadApparentPowerRegs(ApparentPowerRegs *Data);
-  void ReadVoltageRMSRegs(VoltageRMSRegs *Data);
-  void ReadCurrentRMSRegs(CurrentRMSRegs *Data);
+  void readReactivePowerRegs(ReactivePowerRegs *Data);
+
+  /* 
+  Reads the Apparent power registers AVA,BVA and CVA
+  Input: Structure name
+  Output: Apparent power codes stored in respective structure
+  */
+  void readApparentPowerRegs(ApparentPowerRegs *Data);
+
+  /* 
+  Reads the voltage rms registers AVRMS,BVRMS and CVRMS
+  Input: Structure name
+  Output: Voltage rms codes stored in respective structure
+  */
+  void readVoltageRMSRegs(VoltageRMSRegs *Data);
+
+  /* 
+  Reads the current rms registers AIRMS,BIRMS and CIRMS
+  Input: Structure name
+  Output: Current rms codes stored in respective structure
+  */
+  void readCurrentRMSRegs(CurrentRMSRegs *Data);
+
   // void ReadFundActivePowerRegs(FundActivePowerRegs *Data);
   // void ReadFundReactivePowerRegs(FundReactivePowerRegs *Data);
   // void ReadFundApparentPowerRegs(FundApparentPowerRegs *Data);
@@ -504,10 +550,34 @@ public:
   // void ReadTen12CurrentRMSRegs(Ten12CurrentRMSRegs *Data);
   // void ReadVoltageTHDRegsnValues(VoltageTHDRegs *Data);
   // void ReadCurrentTHDRegsnValues(CurrentTHDRegs *Data);
-  void ReadPowerFactorRegsnValues(PowerFactorRegs *Data);
-  void ReadPeriodRegsnValues(PeriodRegs *Data);
-  void ReadAngleRegsnValues(AngleRegs *Data);
-  void ReadTempRegnValue(TemperatureRegnValue *Data);
+
+  /* 
+  Reads the power factor registers APF,BPF and CPF
+  Input: Structure name
+  Output: Power factor codes stored in respective structure
+  */
+  void readPowerFactorRegsnValues(PowerFactorRegs *Data);
+
+  /* 
+  Reads the period registers APERIOD,BPERIOD and CPERIOD
+  Input: Structure name
+  Output: Period codes stored in respective structure
+  */
+  void readPeriodRegsnValues(PeriodRegs *Data);
+
+  /* 
+  Reads angle registers
+  Input: Structure name
+  Output: Angle codes stored in respective structure
+  */
+  void readAngleRegsnValues(AngleRegs *Data);
+
+  /* 
+  Reads the temperature registers TEMP_RSLT
+  Input: Structure name
+  Output: Temperature codes stored in respective structure
+  */
+  void readTempRegnValue(TemperatureRegnValue *Data);
 
   /*----- ADE9000 Calculated Physical parameters -----*/
 
@@ -569,6 +639,11 @@ public:
   */
   void pGain_calibrate(int32_t *, int32_t *, int, uint8_t, uint8_t, float);
 
+  /* 
+  Power gain calibration function
+  Input: Stored in respective structure
+  Output:-
+  */
   void updateEnergyRegisterFromInterrupt(uint32_t (&)[EGY_REG_SIZE], uint32_t (&)[EGY_REG_SIZE]);
 
 private:

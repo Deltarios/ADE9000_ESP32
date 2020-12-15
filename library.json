@@ -1,7 +1,7 @@
 {
     "name": "ADE9000_ESP32",
     "version": "1.0.0",
-    "description": "A \"ADE9000\" program",
+    "description": "A \"ADE9000\" program for compatibility with ESP32",
     "keywords": "ADE9000, ESP32, ARDUINO",
     "repository":
     {
@@ -12,13 +12,13 @@
     [
       {
         "name": "Ariel Rios",
-        "email": "",
+        "email": "ariel.rios@avienergy.mx",
         "maintainer": true
       },
       {
         "name": "David Cuy",
-        "url": "https://www.john-smith/contact",
-        "email": ""
+        "url": "https://davidcuy.github.io/",
+        "email": "david.cuy@avienergy.mx"
       }
     ],
     "license": "MIT",
