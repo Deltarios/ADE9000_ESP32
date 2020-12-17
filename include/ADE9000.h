@@ -72,7 +72,7 @@
     \def BURDEN_RESISTOR
     \brief Used for funtion transform current in Ohm
  */
-#define BURDEN_RESISTOR 10.2f
+#define BURDEN_RESISTOR 10.20
 #endif
 
 #ifndef TURNS_RATIO_TRANSFORMER
@@ -198,7 +198,7 @@ It is the voltage at the ADC input pins per input Voltage(V)(Volts/Volts)
 E.g. The defaul atteunation factor on board is 801. 
 Voltage transfer function = 1/801= 0.001248 ~=0.00125
 ****************************************************************************************************************/
-#define CURRENT_TRANSFER_FUNCTION 1.0 / (TURNS_RATIO_TRANSFORMER * BURDEN_RESISTOR) //The RMS voltage at the ADC input pins per input RMS current  (V/A).(2500:1-->0.00408 with default burden resistors)
+#define CURRENT_TRANSFER_FUNCTION 1.0 / TURNS_RATIO_TRANSFORMER * BURDEN_RESISTOR //The RMS voltage at the ADC input pins per input RMS current  (V/A).(2500:1-->0.00408 with default burden resistors)
 #define VOLTAGE_TRANSFER_FUNCTION 1.0 / ATTEUNATION_FACTOR                          //The RMS voltage at the ADC input pins per input RMS voltage (V/V)
 
 /****************************************************************************************************************

@@ -1,6 +1,6 @@
 {
     "name": "ADE9000_ESP32",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "A \"ADE9000\" program for compatibility with ESP32",
     "keywords": "ADE9000, ESP32, ARDUINO",
     "repository":
