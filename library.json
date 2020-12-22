@@ -1,12 +1,12 @@
 {
     "name": "ADE9000_ESP32",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "description": "A \"ADE9000\" program for compatibility with ESP32",
     "keywords": "ADE9000, ESP32, ARDUINO",
     "repository":
     {
       "type": "git",
-      "url": ""
+      "url": "https://github.com/Deltarios/ADE9000_ESP32"
     },
     "authors":
     [
@@ -22,9 +22,7 @@
       }
     ],
     "license": "MIT",
-    "dependencies": {
-      "ownername/print": "~1.3.0"
-    },
+    "dependencies": {},
     "frameworks": "arduino",
     "platforms": "espressif32"
   }
