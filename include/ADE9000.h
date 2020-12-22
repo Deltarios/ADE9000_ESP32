@@ -138,7 +138,7 @@
 #define ADE9000_CONFIG1 0x0002        /* CF3/ZX pin outputs Zero crossing */
 #define ADE9000_CONFIG2 0x0C00        /* Default High pass corner frequency of 1.25Hz */
 #define ADE9000_CONFIG3 0x0000        /* Peak and overcurrent detection disabled */
-#define ADE9000_ACCMODE 0x0000        /* 60Hz operation, 3P4W Wye configuration, signed accumulation Clear bit 8 i.e. ACCMODE=0x00xx for 50Hz operation ACCMODE=0x0x9x for 3Wire delta when phase B is used as reference */
+#define ADE9000_ACCMODE 0x0100        /* 60Hz operation, 3P4W Wye configuration, signed accumulation Clear bit 8 i.e. ACCMODE=0x00xx for 50Hz operation ACCMODE=0x0x9x for 3Wire delta when phase B is used as reference */
 #define ADE9000_TEMP_CFG 0x000C       /* Temperature sensor enabled */
 #define ADE9000_ZX_LP_SEL 0x001E      /* Line period and zero crossing obtained from combined signals VA,VB and VC */
 #define ADE9000_MASK0 0x00000001      /* Enable EGYRDY interrupt */
@@ -148,7 +148,7 @@
 #define ADE9000_DICOEFF 0x00000000    /* Set DICOEFF= 0xFFFFE000 when integrator is enabled */
 
 /*Constant Definitions***/
-#define ADE90xx_FDSP 8000     /* ADE9000 FDSP: 8000sps, ADE9078 FDSP: 4000sps */
+#define ADE9000_FDSP 8000     /* Signal update Rate ADE9000 FDSP: 8000sps */
 #define ADE9000_RUN_ON 0x0001 /* DSP ON */
 
 /*Energy Accumulation Settings*/
@@ -198,13 +198,12 @@ It is the voltage at the ADC input pins per input Voltage(V)(Volts/Volts)
 E.g. The defaul atteunation factor on board is 801. 
 Voltage transfer function = 1/801= 0.001248 ~=0.00125
 ****************************************************************************************************************/
-#define CURRENT_TRANSFER_FUNCTION 1.0 / TURNS_RATIO_TRANSFORMER * BURDEN_RESISTOR //The RMS voltage at the ADC input pins per input RMS current  (V/A).(2500:1-->0.00408 with default burden resistors)
-#define VOLTAGE_TRANSFER_FUNCTION 1.0 / ATTEUNATION_FACTOR                          //The RMS voltage at the ADC input pins per input RMS voltage (V/V)
+#define CURRENT_TRANSFER_FUNCTION 1.0 / TURNS_RATIO_TRANSFORMER *BURDEN_RESISTOR //The RMS voltage at the ADC input pins per input RMS current  (V/A).(2500:1-->0.00408 with default burden resistors)
+#define VOLTAGE_TRANSFER_FUNCTION 1.0 / ATTEUNATION_FACTOR                       //The RMS voltage at the ADC input pins per input RMS voltage (V/V)
 
 /****************************************************************************************************************
 									Constants: Do not change 
 *****************************************************************************************************************/
-#define F_DSP 8000                     //Signal update Rate
 #define CALIBRATION_EGY_CFG 0xF011     //Latch after EGYRDY. Sample based accumulation. Read with reset disabled. Accumulation enabled
 #define EGYACCTIME 0x1F3F              //Accumulate for a total of 8000 (EGY_TIME+1) samples.
 #define CALIBRATION_ACC_TIME 1         //if EGYACCTIME= 0x1F3F, Accumulation time is 1sec. Change this if EGYACCTIME is changed.
@@ -238,7 +237,7 @@ e.g Channel A Vrms = (AVRMS(register)*CAL_VRMS_CC/10^6) Channel A Active Power =
 #define CAL_IRMS_CC (double)ONE_MILLION / (CURRENT_TRANSFER_FUNCTION * ADE9000_RMS_FULL_SCALE_CODES * SQRT_TO_2)                                                       // Conversion constants (uA/code)
 #define CAL_VRMS_CC (double)ONE_MILLION / (VOLTAGE_TRANSFER_FUNCTION * ADE9000_RMS_FULL_SCALE_CODES * SQRT_TO_2)                                                       // Conversion constants (uV/code)
 #define CAL_POWER_CC (double)ONE_THOUSAND / (VOLTAGE_TRANSFER_FUNCTION * CURRENT_TRANSFER_FUNCTION * ADE9000_WATT_FULL_SCALE_CODES * 2)                                // Conversion constants (mW/code) Applicable for Active, reactive and apparent power
-#define CAL_ENERGY_CC (double)ONE_MILLION / (VOLTAGE_TRANSFER_FUNCTION * CURRENT_TRANSFER_FUNCTION * ADE9000_WATT_FULL_SCALE_CODES * 2 * 8000 * 3600 * (1.0 / 8192.0)) //  Conversion constants (uWhr/xTHR_HI code)Applicable for Active, reactive and apparent energy
+#define CAL_ENERGY_CC (double)ONE_MILLION / (VOLTAGE_TRANSFER_FUNCTION * CURRENT_TRANSFER_FUNCTION * ADE9000_WATT_FULL_SCALE_CODES * 2 * 8000 * 3600 * (1.0 / 8192.0)) // Conversion constants (uWhr/xTHR_HI code)Applicable for Active, reactive and apparent energy
 
 /****************************************************************************************************************
  Structures and Global Variables
@@ -602,6 +601,13 @@ public:
   */
   double convertCodeToPower(int32_t value);
 
+  /* 
+  Convert the codes of registers to energy 
+  Input: code value
+  Output: Power physical parameter (Watt/Hr, VA/Hr, VAR/Hr)
+  */
+  double convertCodeToEnergy(int32_t value);
+
   /*----- ADE9000 Calibration functions -----*/
 
   /* 
@@ -644,7 +650,7 @@ public:
   Input: Stored in respective structure
   Output:-
   */
-  void updateEnergyRegisterFromInterrupt(uint32_t (&)[EGY_REG_SIZE], uint32_t (&)[EGY_REG_SIZE]);
+  void updateEnergyRegisterFromInterrupt(uint32_t (&)[EGY_REG_SIZE], uint32_t (&)[EGY_REG_SIZE], uint32_t (&)[EGY_REG_SIZE]);
 
 private:
   uint8_t _chipSelect_Pin;
