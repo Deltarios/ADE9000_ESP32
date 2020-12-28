@@ -453,7 +453,7 @@ void ADE9000::pGain_calibrate(int32_t *pgainReg, int32_t *accActiveEgyReg, int a
     }
 }
 
-void ADE9000::updateEnergyRegisterFromInterrupt(uint32_t (&accumulatedActiveEnergy_registers)[EGY_REG_SIZE], uint32_t (&accumulatedReactiveEnergy_registers)[EGY_REG_SIZE], uint32_t (&accumulatedApparentEnergy_registers)[EGY_REG_SIZE])
+void ADE9000::updateEnergyRegisterFromInterrupt(int32_t *accumulatedActiveEnergy_registers, int32_t *accumulatedReactiveEnergy_registers, int32_t *accumulatedApparentEnergy_registers)
 {
     const int32_t xWATTHRHI_registers_address[EGY_REG_SIZE] = {ADDR_AWATTHR_HI, ADDR_BWATTHR_HI, ADDR_CWATTHR_HI};
     const int32_t xVARHRHI_registers_address[EGY_REG_SIZE] = {ADDR_AVARHR_HI, ADDR_BVARHR_HI, ADDR_CVARHR_HI};

@@ -646,11 +646,11 @@ public:
   void pGain_calibrate(int32_t *, int32_t *, int, uint8_t, uint8_t, float);
 
   /* 
-  Power gain calibration function
-  Input: Stored in respective structure
+  Update energy register by interrupt 
+  Input: Array size 3 to save each channels (A, B, C), the register for active, reactive and apparence energy
   Output:-
   */
-  void updateEnergyRegisterFromInterrupt(uint32_t (&)[EGY_REG_SIZE], uint32_t (&)[EGY_REG_SIZE], uint32_t (&)[EGY_REG_SIZE]);
+  void updateEnergyRegisterFromInterrupt(int32_t *, int32_t *, int32_t *);
 
 private:
   uint8_t _chipSelect_Pin;
