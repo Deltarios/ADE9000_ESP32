@@ -1,14 +1,28 @@
-#define DEBUG_MODE_OFF
-
-#define NOMINAL_INPUT_VOLTAGE 124
-#define NOMINAL_INPUT_CURRENT 0.94
-#define INPUT_FREQUENCY 60
-
-#define ACCUMULATION_TIME 5
-
 #include "Arduino.h"
 #include <ADE9000RegMap.h>
 #include <ADE9000.h>
+
+const uint8_t NOMINAL_INPUT_VOLTAGE = 220;
+/* Current nominal RMS for Input in Amperes */
+const float NOMINAL_INPUT_CURRENT = 1;
+
+/* Frequency in Hertz */
+const uint8_t INPUT_FREQUENCY = 60;
+
+/* Used for funtion transform current in Ohm */
+const uint8_t CALIBRATION_ANGLE_DEGREES = 60;
+
+/* Current nominal RMS for Input in Amperes */
+const float BURDEN_RESISTOR = 10.20;
+
+/* Used for funtion transform current */
+const uint16_t TURNS_RATIO_TRANSFORMER = 5000;
+
+/* The defaul atteunation factor on board used funtion transform in Ohm/Ohm ((R1 + R2)/ R2) */
+const float ATTEUNATION_FACTOR = 1200;
+
+/* Accumulation time in seconds when EGY_TIME=7999, accumulation mode= sample based */
+const uint8_t ACCUMULATION_TIME = 5;
 
 /*Basic initializations*/
 ADE9000 ade9000;

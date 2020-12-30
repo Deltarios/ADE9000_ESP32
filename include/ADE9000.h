@@ -6,7 +6,7 @@
   Date: 12-07-2020
 */
 #ifndef ADE9000_H
-#define ADE9000_H
+#define ADE9000_H 1
 
 /****************************************************************************************************************
  Includes
@@ -19,112 +19,33 @@
 /****************************************************************************************************************
 									User Inputs
 ******************************************************************************************************************/
-
 #ifndef DEBUG_MODE_OFF
 #define DEBUG_MODE
 #define PRINT_DEBUG(x) (Serial.print(x))
 #endif
 
-#ifndef NOMINAL_INPUT_VOLTAGE
-/* prevent compiler error by supplying a default */
-#warning "NOMINAL_INPUT_VOLTAGE not defined for <ADE9000.h>"
-/** \ingroup ade9000
-    \def NOMINAL_INPUT_VOLTAGE
-    \brief Voltage nominal RMS for Input in Volts
- */
-#define NOMINAL_INPUT_VOLTAGE 120
-#endif
+extern const uint8_t NOMINAL_INPUT_VOLTAGE;
 
-#ifndef NOMINAL_INPUT_CURRENT
-/* prevent compiler error by supplying a default */
-#warning "NOMINAL_INPUT_CURRENT not defined for <ADE9000.h>"
-/** \ingroup ade9000
-    \def NOMINAL_INPUT_VOLTAGE
-    \brief Current nominal RMS for Input in Amperes
- */
-#define NOMINAL_INPUT_CURRENT 1
-#endif
+/* Current nominal RMS for Input in Amperes */
+extern const float NOMINAL_INPUT_CURRENT;
 
-#ifndef INPUT_FREQUENCY
-/* prevent compiler error by supplying a default */
-#warning "INPUT_FREQUENCY not defined for <ADE9000.h>"
-/** \ingroup ade9000
-    \def INPUT_FREQUENCY
-    \brief Frequency in Hertz
- */
-#define INPUT_FREQUENCY 60
-#endif
+/* Frequency in Hertz */
+extern const uint8_t INPUT_FREQUENCY;
 
-#ifndef CALIBRATION_ANGLE_DEGREES
-/* prevent compiler error by supplying a default */
-#warning "CALIBRATION_ANGLE_DEGREES not defined for <ADE9000.h>"
-/** \ingroup ade9000
-    \def CALIBRATION_ANGLE_DEGREES
-    \brief Used for phase calibration in Degrees
- */
-#define CALIBRATION_ANGLE_DEGREES 60
-#endif
+/* Used for funtion transform current in Ohm */
+extern const uint8_t CALIBRATION_ANGLE_DEGREES;
 
-#ifndef BURDEN_RESISTOR
-/* prevent compiler error by supplying a default */
-#warning "BURDEN_RESISTOR not defined for <ADE9000.h>"
-/** \ingroup ade9000
-    \def BURDEN_RESISTOR
-    \brief Used for funtion transform current in Ohm
- */
-#define BURDEN_RESISTOR 10.20
-#endif
+/* Current nominal RMS for Input in Amperes */
+extern const float BURDEN_RESISTOR;
 
-#ifndef TURNS_RATIO_TRANSFORMER
-/* prevent compiler error by supplying a default */
-#warning "TURNS_RATIO_TRANSFORMER not defined for <ADE9000.h>"
-/** \ingroup ade9000
-    \def TURNS_RATIO_TRANSFORMER
-    \brief Used for funtion transform current
- */
-#define TURNS_RATIO_TRANSFORMER 3000
-#endif
+/* Used for funtion transform current */
+extern const uint16_t TURNS_RATIO_TRANSFORMER;
 
-#ifndef ATTEUNATION_FACTOR
-/* prevent compiler error by supplying a default */
-#warning "ATTEUNATION_FACTOR not defined for <ADE9000.h>"
-/** \ingroup ade9000
-    \def TURNS_RATIO_TRANSFORMER
-    \brief The defaul atteunation factor on board used funtion transform in Ohm/Ohm ((R1 + R2)/ R2)
- */
-#define ATTEUNATION_FACTOR 801
-#endif
+/* The defaul atteunation factor on board used funtion transform in Ohm/Ohm ((R1 + R2)/ R2) */
+extern const float ATTEUNATION_FACTOR;
 
-#ifndef ACCUMULATION_TIME
-/* prevent compiler error by supplying a default */
-#warning "ACCUMULATION_TIME not defined for <ADE9000.h>"
-/** \ingroup ade9000
-    \def ACCUMULATION_TIME
-    \brief Accumulation time in seconds when EGY_TIME=7999, accumulation mode= sample based
- */
-#define ACCUMULATION_TIME 1
-#endif
-
-// #ifndef F_CPU
-// /* prevent compiler error by supplying a default */
-// # warning "F_CPU not defined for <util/delay.h>"
-// /** \ingroup util_delay
-//     \def F_CPU
-//     \brief CPU frequency in Hz
-
-//     The macro F_CPU specifies the CPU frequency to be considered by
-//     the delay macros.  This macro is normally supplied by the
-//     environment (e.g. from within a project header, or the project's
-//     Makefile).  The value 1 MHz here is only provided as a "vanilla"
-//     fallback if no such user-provided definition could be found.
-
-//     In terms of the delay functions, the CPU frequency can be given as
-//     a floating-point constant (e.g. 3.6864E6 for 3.6864 MHz).
-//     However, the macros in <util/setbaud.h> require it to be an
-//     integer value.
-//  */
-// # define F_CPU 1000000UL
-// #endif
+/* Accumulation time in seconds when EGY_TIME=7999, accumulation mode= sample based */
+extern const uint8_t ACCUMULATION_TIME;
 
 /****************************************************************************************************************
  Definitions
