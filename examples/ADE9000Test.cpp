@@ -25,9 +25,11 @@ const float ATTEUNATION_FACTOR = 1200;
 const uint8_t ACCUMULATION_TIME = 5;
 
 /*Basic initializations*/
-ADE9000 ade9000;
 #define SPI_SPEED 4000000UL // SPI Speed
-#define CS_PIN 5           
+#define CS_PIN 5      
+
+ADE9000 ade9000(SPI_SPEED, CS_PIN);
+
 // #define ADE9000_RESET_PIN 10 //Reset Pin on HW
 #define PM_1 13 // PM1 Pin
 
@@ -46,7 +48,7 @@ void setup()
   pinMode(PM_1, OUTPUT);   // Set PM1 pin as output
   digitalWrite(PM_1, LOW); // Set PM1 select pin low for PSM0 mode
   delay(1000);
-  ade9000.SPI_Init(SPI_SPEED, CS_PIN); // Initialize SPI
+  ade9000.initADE9000(false);
   ade9000.setupADE9000();              // Initialize ADE9000 registers according to values in ADE9000API.h
   Serial.print("RUN Register: ");
   Serial.println(ade9000.SPI_Read_16(ADDR_RUN), HEX);

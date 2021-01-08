@@ -8,8 +8,19 @@
 
 #include "ADE9000.h"
 
-ADE9000::ADE9000()
+ADE9000::ADE9000(uint32_t SPI_speed, uint8_t chipSelect_Pin)
 {
+    this->_SPI_speed = SPI_speed;
+    this->_chipSelect_Pin = chipSelect_Pin;
+}
+
+void ADE9000::initADE9000(bool initSPI)
+{
+    if (!initSPI)
+    this->SPI_Init();
+
+    pinMode(_chipSelect_Pin, OUTPUT);                                   // Set Chip select pin as output
+    digitalWrite(_chipSelect_Pin, HIGH);                                // Set Chip select pin high
 }
 
 void ADE9000::setupADE9000(void)
@@ -42,14 +53,10 @@ void ADE9000::resetADE9000(uint8_t ADE9000_RESET_PIN)
     Serial.println("Reset Done");
 }
 
-void ADE9000::SPI_Init(uint32_t SPI_speed, uint8_t chipSelect_Pin)
+void ADE9000::SPI_Init()
 {
     SPI.begin();                                                       //Initiate SPI port
-    SPI.beginTransaction(SPISettings(SPI_speed, MSBFIRST, SPI_MODE0)); //Setup SPI parameters
-    pinMode(chipSelect_Pin, OUTPUT);                                   //Set Chip select pin as output
-    digitalWrite(chipSelect_Pin, HIGH);                                //Set Chip select pin high
-
-    _chipSelect_Pin = chipSelect_Pin;
+    SPI.beginTransaction(SPISettings(_SPI_speed, MSBFIRST, SPI_MODE0)); //Setup SPI parameters
 }
 
 void ADE9000::SPI_Write_16(uint16_t Address, uint16_t Data)

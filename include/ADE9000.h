@@ -368,7 +368,14 @@ public:
   /*
   Constructor for ADE9000 object.
   */
-  ADE9000();
+  ADE9000(uint32_t SPI_speed = 4000000UL, uint8_t chipSelect_Pin = 5);
+
+  /*
+  Initial the pins controller and SPI of the ADE9000
+  Input: Status of SPI of another device initializated.
+  Output:-
+  */
+  void initADE9000(bool initSPI = false);
 
   /*
   Initializes the ADE9000. The initial settings for registers are defined in ADE9000API.h header file
@@ -391,7 +398,7 @@ public:
   Input: SPI speed, chip select pin
   Output:-
   */
-  void SPI_Init(uint32_t SPI_speed, uint8_t chipSelect_Pin);
+  void SPI_Init();
 
   /* 
   Writes 16bit data to a 16 bit register. 
@@ -574,6 +581,7 @@ public:
   void updateEnergyRegisterFromInterrupt(int32_t *, int32_t *, int32_t *);
 
 private:
+  uint8_t _SPI_speed;
   uint8_t _chipSelect_Pin;
 };
 
